@@ -183,12 +183,70 @@ public class Controller : MonoBehaviour
         tiles[clickedTile].current = true;
         FindSelectableTiles(false);
 
+        int cop1pos = cops[0].GetComponent<CopMove>().currentTile;
+        int cop2pos = cops[1].GetComponent<CopMove>().currentTile;
+
+        List<Tile> listVisitedTile = new List<Tile>();
+        foreach (var item in tiles)
+        {
+            if (item.selectable)
+            {
+                listVisitedTile.Add(item);
+            }
+        }
+
+        List<Tile> listVisitedTile2 = new List<Tile>();
+        foreach (var item in tiles)
+        {
+            if (item.selectable)
+            {
+                listVisitedTile2.Add(item);
+            }
+        }
+
         /*TODO: Cambia el código de abajo para hacer lo siguiente
         - Elegimos una casilla aleatoria entre las seleccionables que puede ir el caco
         - Movemos al caco a esa casilla
         - Actualizamos la variable currentTile del caco a la nueva casilla
         */
-        robber.GetComponent<RobberMove>().MoveToTile(tiles[robber.GetComponent<RobberMove>().currentTile]);
+
+       
+       //Cola para el BFS cop1
+       /*Queue<Tile> nodes = new Queue<Tile>();
+       Tile actualCasilla = null;
+
+       nodes.Enqueue(tiles[cop1pos]);
+
+       while (nodes.Count != 0)
+       {
+           actualCasilla = nodes.Dequeue();
+
+               foreach (int i in actualCasilla.adjacency)
+               {
+                   if (tiles[i].visited == false)
+                   {
+                       tiles[i].visited = true;
+                       tiles[i].parent = actualCasilla;
+                       tiles[i].distance = actualCasilla.distance + 1;
+
+                       nodes.Enqueue(tiles[i]);
+                   }
+               }
+
+       }
+
+       foreach (Tile x in listVisitedTile)
+       {
+           alejada = x;
+
+           if (x.distance > alejada.distance)
+           {
+               alejada = x;
+           }
+       }*/
+
+
+       robber.GetComponent<RobberMove>().MoveToTile(tiles[robber.GetComponent<RobberMove>().currentTile]);
     }
 
     public void EndGame(bool end)
@@ -229,38 +287,75 @@ public class Controller : MonoBehaviour
         rounds.text = "Rounds: " + roundCount;
     }
 
-    public void FindSelectableTiles(bool cop)
+    public void FindSelectableTiles(bool cop) //el algoritmo BFS. Se valorará que(1) las fichas no puedan moverse a su casilla actual y(2) un policía no pueda moverse a una casilla que requiera el paso por la casilla ocupada por el otro policía.
     {
-                 
-        int indexcurrentTile;        
 
-        if (cop==true)
+        int indexcurrentTile;
+
+        int cop1pos = cops[0].GetComponent<CopMove>().currentTile;
+        int cop2pos = cops[1].GetComponent<CopMove>().currentTile;
+
+        if (cop == true)
             indexcurrentTile = cops[clickedCop].GetComponent<CopMove>().currentTile;
         else
             indexcurrentTile = robber.GetComponent<RobberMove>().currentTile;
 
         //La ponemos rosa porque acabamos de hacer un reset
         tiles[indexcurrentTile].current = true;
+        tiles[indexcurrentTile].visited = true;
+        tiles[indexcurrentTile].parent = null;
+        tiles[indexcurrentTile].distance = 0;
+
 
         //Cola para el BFS
         Queue<Tile> nodes = new Queue<Tile>();
+        Tile actualCasilla = null;
+
+        nodes.Enqueue(tiles[indexcurrentTile]);
+
+        while (nodes.Count != 0)
+        {
+            actualCasilla = nodes.Dequeue();
+            actualCasilla.selectable = true;
+            if ((actualCasilla.distance + 1) <= Constants.Distance)
+            {
+                foreach (int i in actualCasilla.adjacency)
+                {
+                    if (tiles[i].visited == false && tiles[i].numTile != cop1pos && tiles[i].numTile != cop2pos)
+                    {
+                        tiles[i].visited = true;
+                        tiles[i].parent = actualCasilla;
+                        tiles[i].distance = actualCasilla.distance + 1;
+
+                        nodes.Enqueue(tiles[i]);
+                    }
+                }
+            }
+        }
+
 
         //TODO: Implementar BFS. Los nodos seleccionables los ponemos como selectable=true
         //Tendrás que cambiar este código por el BFS
-        for(int i = 0; i < Constants.NumTiles; i++)
+
+        int tilesAdj;
+        int tilesAdj2;
+
+
+        for (int i = 0; i < tiles[indexcurrentTile].adjacency.Count; i++)
         {
-            tiles[i].selectable = true;
+            tilesAdj = tiles[indexcurrentTile].adjacency[i];
+            tiles[tilesAdj].selectable = true;
+            for (int j = 0; j < tiles[tilesAdj].adjacency.Count; j++)
+            {
+                tilesAdj2 = tiles[tilesAdj].adjacency[j];
+                tiles[tilesAdj2].selectable = true;
+
+            }
         }
 
 
     }
-    
-   
-    
 
-    
 
-   
 
-       
 }
